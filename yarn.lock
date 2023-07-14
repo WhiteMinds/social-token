@@ -1266,7 +1266,7 @@
   resolved "https://mirrors.tencent.com/npm/@humanwhocodes%2fobject-schema/-/object-schema-1.2.0.tgz#87de7af9c231826fdd68ac7258f77c429e0e5fcf"
   integrity sha512-wdppn25U8z/2yiaT6YGquE6X8sSv7hNMWSXYSSU1jGv/yd6XqjXgTDJ8KP4NgjTXfJ3GbRjeeb8RTV7a/VpM+w==
 
-"@lay2/pw-core@^0.4.0-alpha.11":
+"@lay2/pw-core@^0.4.0-alpha.11", "@lay2/pw-core@^0.4.0-alpha.13":
   version "0.4.0-alpha.13"
   resolved "https://registry.npmmirror.com/@lay2/pw-core/-/pw-core-0.4.0-alpha.13.tgz#8e5978288aa0a5e5f063826956bb7963dfba274e"
   integrity sha512-2dBH2lResdhmqb6rpnK4hkEYrwhGSqgTd1RmPpXWzcce5yFSfbtPHVzm3Vex3U956+vJZtPxvQmnMXegq6/aCw==
@@ -3117,6 +3117,13 @@ axios@^0.21.1:
   integrity sha512-dKQiRHxGD9PPRIUNIWvZhPTPpl1rf/OxTYKsqKUDjBwYylTvV7SjSHJb9ratfyzM6wCdLCOYLzs73qpg5c4iGA==
   dependencies:
     follow-redirects "^1.10.0"
+
+axios@^0.24.0:
+  version "0.24.0"
+  resolved "https://registry.npmmirror.com/axios/-/axios-0.24.0.tgz#804e6fa1e4b9c5288501dd9dff56a7a0940d20d6"
+  integrity sha512-Q6cWsys88HoPgAaFAVUb0WpPk0O8iTeisR9IMqy9G8AbO4NlpVknrnQS03zzF9PGAWgO3cgletO3VjV/P7VztA==
+  dependencies:
+    follow-redirects "^1.14.4"
 
 babel-eslint@^10.1.0:
   version "10.1.0"
@@ -6087,6 +6094,11 @@ follow-redirects@^1.0.0, follow-redirects@^1.10.0:
   version "1.14.2"
   resolved "http://mirrors.cloud.tencent.com/npm/follow-redirects/-/follow-redirects-1.14.2.tgz#cecb825047c00f5e66b142f90fed4f515dec789b"
   integrity sha512-yLR6WaE2lbF0x4K2qE2p9PEXKLDjUjnR/xmjS3wHAYxtlsI9MLLBJUZirAHKzUZDGLxje7w/cXR49WOUo4rbsA==
+
+follow-redirects@^1.14.4:
+  version "1.15.2"
+  resolved "https://registry.npmmirror.com/follow-redirects/-/follow-redirects-1.15.2.tgz#b460864144ba63f2681096f274c4e57026da2c13"
+  integrity sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==
 
 for-each@^0.3.3:
   version "0.3.3"
@@ -12083,6 +12095,20 @@ unset-value@^1.0.0:
   dependencies:
     has-value "^0.3.1"
     isobject "^3.0.0"
+
+up-ckb-alpha-test@^0.1.5:
+  version "0.1.5"
+  resolved "https://registry.npmmirror.com/up-ckb-alpha-test/-/up-ckb-alpha-test-0.1.5.tgz#1f5f6463cbb1bbb27d494fab780068515458737d"
+  integrity sha512-vadSbprDGlFIj5jJghyDji6Y0/vIKGpGj/DXUoTAiMQKjQ+u57ISSlriwsqUhBNuH1M4YB83gqRa+eKkCe9Mbw==
+  dependencies:
+    "@lay2/pw-core" "^0.4.0-alpha.13"
+    axios "^0.24.0"
+    up-core-test "^0.1.5"
+
+up-core-test@^0.1.12, up-core-test@^0.1.5:
+  version "0.1.12"
+  resolved "https://registry.npmmirror.com/up-core-test/-/up-core-test-0.1.12.tgz#38e6937c8022b8c959194111171d1ebd83ed4139"
+  integrity sha512-aDk6pErWVHx5t+94mAq9wLH4wCI5DMnRfiS21MDCaR7RgXcHwaX2sVDJoHCoxr/YEGXRBddoAwXyDBU7USRh4w==
 
 upath@^1.1.1:
   version "1.2.0"

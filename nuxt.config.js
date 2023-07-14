@@ -88,8 +88,8 @@ export default {
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
-    // analyze: process.env.NODE_ENV === 'production',
-    transpile: [/^element-ui/],
+    analyze: process.env.NODE_ENV === 'production',
+    transpile: [/^element-ui/, /up-ckb-alpha-test/],
     // publicPath: ,
     optimization: {
       splitChunks: {
