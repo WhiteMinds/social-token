@@ -70,6 +70,9 @@ import PWCore, {
   AmountUnit,
   Builder,
 } from '@lay2/pw-core'
+import UPCKB, { UPCKBBaseProvider } from 'up-ckb-alpha-test'
+import UPCore, { UPAuthMessage, UPAuthResponse } from 'up-core-test'
+
 import {
   getUSDTSignMessage,
   getSUDTSignCallback,
@@ -83,6 +86,31 @@ import { getCkbEnv } from '~/assets/js/config'
 import UnipassBuilder from '~/assets/js/UnipassBuilder.ts'
 import UnipassBuilderClear from '~/assets/js/UnipassBuilderClear.ts'
 import UnipassSigner from '~/assets/js/UnipassSigner.ts'
+
+class UPCoreSimpleProvier extends UPCKBBaseProvider {
+  async authorize(message) {
+    const {
+      keyType,
+      pubkey,
+      sig: sigHex,
+    } = await UPCore.authorize(
+      new UPAuthMessage('CKB_TX', this.username, message),
+    )
+
+    let sig = sigHex
+    if (keyType === 'Secp256k1Pubkey') {
+      let v = Number.parseInt(sigHex.slice(-2), 16)
+      if (v >= 27) v -= 27
+      sig = new Reader(
+        sigHex.slice(0, -2) + v.toString(16).padStart(2, '0'),
+      ).serializeJson()
+    }
+
+    // convert to hex string
+    return { keyType, pubkey, sig }
+  }
+}
+
 export default {
   data() {
     const name = this.$route.query.name
@@ -168,7 +196,8 @@ export default {
         amount: '',
       },
       fee: name === 'CKB' ? '0.00001551' : '0.00002040',
-      feeRate: 1000,
+      // TODO: 因为 send sudt 的 fee 计算 bug 而临时调整
+      feeRate: 2000,
       name,
       // Send all CKB
       clearCKB: false,
@@ -348,23 +377,27 @@ export default {
           capacity: new Amount('1', AmountUnit.shannon).toHexString(),
         },
       })
+      console.log(1)
       if (res.data.length === 0) {
+        console.log(2)
         const enough = await getBalanceEnough()
         if (enough) {
+          console.log(2.1)
           const getData = async () => {
             if (address && amount && this.sudtTokenId) {
               const { tx, txObj, message } = await getSimpleUSDTSignMessage(
                 this.sudtTokenId,
                 new Address(address, AddressType.ckb),
                 new Amount(amount, this.decimals),
-                provider.pubkey,
+                provider.address,
               )
               const fee = Builder.calcFee(tx, this.feeRate)
               this.fee = fee.toString(8, AmountUnit.shannon)
-              return { txObj, message }
+              return { tx, txObj, message }
             }
           }
           const data = await getData()
+          console.log(2.11)
           if (blur) {
             return data
           } else {
@@ -380,6 +413,7 @@ export default {
               })
           }
         } else if (!blur) {
+          console.log(2.2)
           this.$alert(this.t_('Tip2'), this.t_('Tip2Title'), {
             confirmButtonText: this.t_('Tip2Confirm'),
           }).then(() => {
@@ -387,15 +421,17 @@ export default {
           })
         }
       } else if (address && amount && this.sudtTokenId) {
+        console.log(3)
         const { tx, txObj, message } = await getUSDTSignMessage(
           this.sudtTokenId,
           new Address(address, AddressType.ckb),
           new Amount(amount, this.decimals),
           provider.pubkey,
         )
+        console.log(3.1)
         const fee = Builder.calcFee(tx, this.feeRate)
         this.fee = fee.toString(8, AmountUnit.shannon)
-        return { txObj, message }
+        return { tx, txObj, message }
       }
       // build
     },
@@ -445,16 +481,37 @@ export default {
           data = await this.buildST()
         }
         if (data) {
-          const { message, txObj } = data
-          this.Sea.localStorage('signData', {
-            txObj,
-            pending: {
-              from: provider.address,
-              to: address,
-              amount: new Amount(amount, this.decimals).toHexString(),
-            },
-          })
-          this.sign(message, provider.pubkey)
+          const { message, tx, txObj } = data
+          const pending = {
+            from: provider.address,
+            to: address,
+            amount: new Amount(amount, this.decimals).toHexString(),
+          }
+          // this.Sea.localStorage('signData', {
+          //   txObj,
+          //   pending: {
+          //     from: provider.address,
+          //     to: address,
+          //     amount: new Amount(amount, this.decimals).toHexString(),
+          //   },
+          // })
+          // this.sign(message, provider.pubkey)
+
+          const upProvider = new UPCoreSimpleProvier(
+            provider.username,
+            '0xd01f5152c267b7f33b9795140c2467742e8424e49ebe2331caec197f7281b60a',
+          )
+          // const transformedTx = transformers.TransformTransaction(txObj)
+          console.log('data', data, tx)
+          const txHash = await UPCKB.sendTransaction(tx, upProvider)
+          // const { sig } = await upProvider.authorize(message)
+          // const txHash = await getSUDTSignCallback(sig, txObj)
+          if (txHash) {
+            this.$message.success(this.t_('SendSuccess'))
+            this.pendingList(txHash, pending, txObj)
+          } else {
+            this.$message.error(this.t_('SendFailed'))
+          }
         }
       } catch (error) {
         this.loading = false
@@ -466,22 +523,36 @@ export default {
     async sendCKB() {
       try {
         const { address, amount } = this.form
-        const tx = await this.buildCKB(address, amount)
-        const signer = new UnipassSigner(PWCore.provider)
-        const messages = signer.toMessages(tx)
-        const message = messages[0].message
-        const pubkey = this.provider.pubkey
-        const txObj = transformers.TransformTransaction(tx)
-        this.Sea.localStorage('signData', {
-          txObj,
-          pending: {
-            from: this.provider.address,
-            to: address,
-            amount: new Amount(amount).toHexString(),
-          },
-        })
-        this.sign(message, pubkey)
+        console.log(this.provider.username, address, amount)
+        UPCore.initPop()
+        const provider = new UPCoreSimpleProvier(
+          this.provider.username,
+          '0xd01f5152c267b7f33b9795140c2467742e8424e49ebe2331caec197f7281b60a',
+        )
+
+        // const tx = await this.buildCKB(address, amount)
+        // const txHash = await UPCKB.sendTransaction(tx, provider)
+
+        const toAddress = new Address(address, AddressType.ckb)
+        const toAmount = new Amount(String(amount))
+        const txHash = await UPCKB.sendCKB(toAddress, toAmount, provider)
+        console.log(txHash)
+        // const signer = new UnipassSigner(PWCore.provider)
+        // const messages = signer.toMessages(tx)
+        // const message = messages[0].message
+        // const pubkey = this.provider.pubkey
+        // const txObj = transformers.TransformTransaction(tx)
+        // this.Sea.localStorage('signData', {
+        //   txObj,
+        //   pending: {
+        //     from: this.provider.address,
+        //     to: address,
+        //     amount: new Amount(amount).toHexString(),
+        //   },
+        // })
+        // this.sign(message, pubkey)
       } catch (error) {
+        console.log('error', error)
         const message = error.message
         if (message.includes('input capacity not enough')) {
           this.$confirm(this.t_('SendAllTip'), this.t_('BeCareful'), {

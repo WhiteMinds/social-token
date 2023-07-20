@@ -1,10 +1,10 @@
 import { Provider, Platform, AddressType, Address } from '@lay2/pw-core'
-import { getAddress } from '../utils'
+// import { getAddress } from '../utils'
 
 export class UsdtProvider extends Provider {
-  constructor(private readonly masterPubkey: string) {
+  constructor(private readonly addressStr: string) {
     super(Platform.ckb)
-    const addressStr = getAddress(this.masterPubkey)
+    // const addressStr = getAddress(this.masterPubkey)
     // console.log('this.masterPubkey', this.masterPubkey)
     this.address = new Address(addressStr, AddressType.ckb)
   }

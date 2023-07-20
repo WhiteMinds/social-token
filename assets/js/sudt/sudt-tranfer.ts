@@ -77,6 +77,7 @@ export async function getSUDTSignCallback(sig: string, txObj: any) {
   // console.log('transformedTx', JSON.stringify(transformedTx))
   const rpc = new RPC(process.env.CKB_NODE_URL as string)
   try {
+    console.log('transformedTx', transformedTx)
     const txhash = await rpc.send_transaction(transformedTx, 'passthrough')
     return txhash
   } catch (e) {
@@ -85,7 +86,13 @@ export async function getSUDTSignCallback(sig: string, txObj: any) {
   }
 }
 
-export async function sendTx(sig: string, isMainNet: boolean, txObj: any, myAddr: string, signMsgs: Message[]) {
+export async function sendTx(
+  sig: string,
+  isMainNet: boolean,
+  txObj: any,
+  myAddr: string,
+  signMsgs: Message[],
+) {
   const witnessArgs: WitnessArgs = {
     lock: '0x01' + sig.replace('0x', ''),
     input_type: '',
@@ -96,7 +103,7 @@ export async function sendTx(sig: string, isMainNet: boolean, txObj: any, myAddr
   ).serializeJson()
 
   for (const msg of signMsgs) {
-    if (parseToAddress(isMainNet, parseToLomusScript(msg.lock)) === myAddr)  {
+    if (parseToAddress(isMainNet, parseToLomusScript(msg.lock)) === myAddr) {
       txObj.witnesses[msg.index] = witness
     }
   }

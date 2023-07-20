@@ -272,6 +272,7 @@ export default {
         hash_type: this.sudt.hashType,
         args: this.sudt.args,
       }
+      console.log('before requestPartialSignedTx')
       const tx = await requestPartialSignedTx(
         sudt,
         provider.address,
@@ -279,6 +280,7 @@ export default {
         this.exchangeSudtAmount.toHexString(),
         amount.toHexString(),
       )
+      console.log('after requestPartialSignedTx', tx)
       const { txObj, messages } = await buildSignMessage(tx, provider.pubkey)
       this.Sea.localStorage('depositToGwTx', txObj)
       this.Sea.localStorage('depositSignMessages', messages)

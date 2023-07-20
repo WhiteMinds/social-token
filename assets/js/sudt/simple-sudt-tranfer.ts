@@ -31,16 +31,19 @@ export async function getSimpleUSDTSignMessage(
   sudtTokenId: string,
   address: Address,
   amount: Amount,
-  masterPubkey: string,
+  providerAddress: string,
 ) {
-  const provider = new UsdtProvider(masterPubkey)
+  console.log('getSimpleUSDTSignMessage', sudtTokenId)
+  const provider = new UsdtProvider(providerAddress)
 
   const cellDeps = await getUnipassCellDeps()
+  console.log('getSimpleUSDTSignMessage', 2)
   const lockLen = (1 + (8 + 256 * 2) * 2) * 2
   const collector = new UnipassIndexerCollector(
     process.env.CKB_INDEXER_URL as string,
   )
 
+  console.log('getSimpleUSDTSignMessage', 3)
   const builderOption: SimpleSUDTBuilderOptions = {
     witnessArgs: {
       lock: '0x' + '0'.repeat(lockLen),
@@ -50,9 +53,12 @@ export async function getSimpleUSDTSignMessage(
     collector,
     // sender can leave a minimum of 0.1 CKB as a fee
     minimumOutputCellCapacity: new Amount('142.5'),
+    // TODO: 因为 send sudt 的 fee 计算 bug 而临时调整
+    feeRate: 2000,
   }
 
   const sudt = new SUDT(sudtTokenId)
+  console.log('getSimpleUSDTSignMessage', 4)
 
   const builder = new SimpleSUDTBuilder(
     sudt,
@@ -61,9 +67,10 @@ export async function getSimpleUSDTSignMessage(
     cellDeps,
     builderOption,
   )
+  console.log('getSimpleUSDTSignMessage', 5)
   console.log('builder', builder)
   const tx = await builder.build()
-  console.log('tx', tx)
+  console.log('tx', tx, tx.witnesses[0])
   const signer = new UnipassSigner(provider)
   console.log('signer', signer)
   const messages = signer.toMessages(tx)

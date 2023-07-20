@@ -11,11 +11,24 @@ import PWCore, {
   Amount,
   AmountUnit,
   Script,
+  ChainID,
+  CHAIN_SPECS,
+  Address,
+  AddressType,
 } from '@lay2/pw-core'
+import UP from 'up-core-test'
+import UPCKB from 'up-ckb-alpha-test'
 import { getCkbEnv } from '~/assets/js/config'
-import { getAddress } from '~/assets/js/utils'
+// import { getAddress } from '~/assets/js/utils'
 import UnipassProvider from '~/assets/js/UnipassProvider.ts'
 import Header from '~/components/header.vue'
+
+// const WalletType = {
+//   Unipass: 'Unipass',
+//   Metamask: 'Metamask',
+//   WalletConnect: 'WalletConnect',
+//   Flashsigner: 'flashsigner',
+// }
 
 export default {
   components: { Header },
@@ -48,36 +61,70 @@ export default {
       this.Sea.localStorage('signData', '')
       window.location.reload()
     },
-    init() {
+    async init() {
+      PWCore.chainId = ChainID.ckb
+      PWCore.config = CHAIN_SPECS.Lina
+      UP.config({
+        domain: 'app.unipass.id',
+      })
+      UPCKB.config({
+        upLockCodeHash:
+          '0xd01f5152c267b7f33b9795140c2467742e8424e49ebe2331caec197f7281b60a',
+        upSnapshotUrl: 'https://aggregator.unipass.id/snapshot/',
+        ckbNodeUrl: process.env.CKB_NODE_URL,
+        ckbIndexerUrl: process.env.CKB_INDEXER_URL,
+      })
+
       const provider = this.Sea.localStorage('provider')
       if (provider) {
         this.$store.state.provider = provider
-        this.PWCore(provider)
+        await this.PWCore(provider)
         this.loading = false
+
+        // const cells = await PWCore.defaultCollector.collect(
+        //   new Address(provider.address, AddressType.ckb),
+        //   {
+        //     neededAmount: new Amount(62),
+        //   },
+        // )
+        // console.log('cells', cells)
       } else {
-        this.login()
+        await this.login()
       }
     },
-    login() {
-      const ret = this.Sea.json(this.$route.query.unipass_ret)
-      if (ret) {
-        const provider = ret.data
-        if (provider.pubkey && provider.email) {
-          this.Sea.params('unipass_ret', '')
-          provider.address = getAddress(provider.pubkey)
-          this.Sea.localStorage('provider', provider)
-          this.init()
-          return
-        }
+    async login() {
+      // const ret = this.Sea.json(this.$route.query.unipass_ret)
+      // if (ret) {
+      //   const provider = ret.data
+      //   if (provider.pubkey && provider.email) {
+      //     this.Sea.params('unipass_ret', '')
+      //     provider.address = getAddress(provider.pubkey)
+      //     this.Sea.localStorage('provider', provider)
+      //     this.init()
+      //     return
+      //   }
+      // }
+      // const url = `${process.env.UNIPASS_URL}/login?success_url=${window.location.href}`
+      // window.location.replace(url)
+
+      UP.initPop()
+      const account = await UP.connect({ email: true })
+      const address = UPCKB.getCKBAddress(account.username)
+      const provider = {
+        email: account.email,
+        address: address.toCKBAddress(),
+        // walletType: WalletType.Unipass,
+        username: account.username,
       }
-      const url = `${process.env.UNIPASS_URL}/login?success_url=${window.location.href}`
-      window.location.replace(url)
+      console.log(provider)
+      this.Sea.localStorage('provider', provider)
+      this.init()
     },
     async PWCore(provider) {
       const url = getCkbEnv()
       PWCore.chainId = url.CHAIN_ID
       await new PWCore(url.NODE_URL).init(
-        new UnipassProvider(provider.email, provider.pubkey),
+        new UnipassProvider(provider.email, provider.address),
         new IndexerCollector(url.INDEXER_URL),
         url.CHAIN_ID,
       )
