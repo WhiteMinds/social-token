@@ -12,10 +12,14 @@ import PWCore, {
   AmountUnit,
   Script,
 } from '@lay2/pw-core'
-import { getCkbEnv } from '~/assets/js/config'
-import { getAddress } from '~/assets/js/utils'
-import UnipassProvider from '~/assets/js/UnipassProvider.ts'
+import UPCore from 'up-core-test'
+import UPCKB from 'up-ckb-alpha-test'
+import { getCkbEnv, initSDKConfigs } from '~/assets/js/config'
+import { UnipassV3Provider } from '~/assets/js/UnipassV3Provider.ts'
 import Header from '~/components/header.vue'
+
+// TODO: move to main.ts
+initSDKConfigs()
 
 export default {
   components: { Header },
@@ -48,36 +52,38 @@ export default {
       this.Sea.localStorage('signData', '')
       window.location.reload()
     },
-    init() {
+    async init() {
       const provider = this.Sea.localStorage('provider')
       if (provider) {
         this.$store.state.provider = provider
-        this.PWCore(provider)
+        await this.PWCore(provider)
         this.loading = false
       } else {
-        this.login()
+        await this.login()
       }
     },
-    login() {
-      const ret = this.Sea.json(this.$route.query.unipass_ret)
-      if (ret) {
-        const provider = ret.data
-        if (provider.pubkey && provider.email) {
-          this.Sea.params('unipass_ret', '')
-          provider.address = getAddress(provider.pubkey)
-          this.Sea.localStorage('provider', provider)
-          this.init()
-          return
-        }
+    async login() {
+      UPCore.initPop()
+      const account = await UPCore.connect({ email: true })
+      const address = UPCKB.getCKBAddress(account.username)
+      const provider = {
+        email: account.email,
+        address: address.toCKBAddress(),
+        username: account.username,
       }
-      const url = `${process.env.UNIPASS_URL}/login?success_url=${window.location.href}`
-      window.location.replace(url)
+      this.Sea.localStorage('provider', provider)
+      this.init()
     },
     async PWCore(provider) {
       const url = getCkbEnv()
+      // TODO: move to initSDKConfigs?
       PWCore.chainId = url.CHAIN_ID
       await new PWCore(url.NODE_URL).init(
-        new UnipassProvider(provider.email, provider.pubkey),
+        new UnipassV3Provider(
+          provider.username,
+          // TODO: from .env or UPCKB config
+          '0xd01f5152c267b7f33b9795140c2467742e8424e49ebe2331caec197f7281b60a',
+        ),
         new IndexerCollector(url.INDEXER_URL),
         url.CHAIN_ID,
       )
