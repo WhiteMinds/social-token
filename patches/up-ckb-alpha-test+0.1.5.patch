@@ -1,0 +1,39 @@
+diff --git a/node_modules/up-ckb-alpha-test/build/module/index.js b/node_modules/up-ckb-alpha-test/build/module/index.js
+index ba21598..f3d8365 100644
+--- a/node_modules/up-ckb-alpha-test/build/module/index.js
++++ b/node_modules/up-ckb-alpha-test/build/module/index.js
+@@ -37,12 +37,12 @@ async function sendCKB(to, amount, provider) {
+  */
+ async function sendTransaction(tx, provider) {
+     // TODO: save old cell deps and restore old cell deps after complete tx
+-    // const oldCellDeps = tx.raw.cellDeps;
++    const oldCellDeps = tx.raw.cellDeps;
+     tx.raw.cellDeps = [];
+     const signer = new DefaultSigner(provider);
+     const signedTx = await signer.sign(tx);
+     const rpc = new RPC(getConfig().ckbNodeUrl);
+-    return sendUPLockTransaction(provider.usernameHash, signedTx, rpc);
++    return sendUPLockTransaction(provider.usernameHash, signedTx, rpc, oldCellDeps);
+ }
+ export * from './up-lock-proof';
+ export * from './providers';
+diff --git a/node_modules/up-ckb-alpha-test/build/module/up-lock-proof.js b/node_modules/up-ckb-alpha-test/build/module/up-lock-proof.js
+index bb0ba63..95ca6be 100644
+--- a/node_modules/up-ckb-alpha-test/build/module/up-lock-proof.js
++++ b/node_modules/up-ckb-alpha-test/build/module/up-lock-proof.js
+@@ -101,13 +101,14 @@ function extractSigFromWitness(witness) {
+  * @param rpc
+  * @returns CKB transaction hash
+  */
+-export async function sendUPLockTransaction(usernameHash, signedTx, rpc) {
++export async function sendUPLockTransaction(usernameHash, signedTx, rpc, oldCellDeps) {
+     // fetch cellDeps/userinfo/proof from aggregator
+     const assetLockProof = await fetchAssetLockProof(usernameHash);
+     if (new Reader(assetLockProof.lockInfo[0].userInfo).length() === 0) {
+         throw new Error('user not registered');
+     }
+     // fill tx cell deps and witness
++    assetLockProof.cellDeps = [...assetLockProof.cellDeps, ...oldCellDeps];
+     const completedSignedTx = completeTxWithProof(signedTx, assetLockProof, usernameHash);
+     const transformedTx = transformers.TransformTransaction(completedSignedTx);
+     const txHash = await rpc.send_transaction(transformedTx, 'passthrough');

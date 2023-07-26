@@ -2,11 +2,10 @@ import PWCore, {
   Address,
   Amount,
   AmountUnit,
-  // Builder,
+  Builder,
   SUDT,
   transformers,
 } from '@lay2/pw-core'
-import { getUnipassCellDeps } from '../utils'
 import UnipassSigner from '../UnipassSigner'
 import {
   SimpleSUDTBuilder,
@@ -31,22 +30,16 @@ export async function getSimpleUSDTSignMessage(
   sudtTokenId: string,
   address: Address,
   amount: Amount,
-  masterPubkey: string,
+  providerAddressStr: string,
 ) {
-  const provider = new UsdtProvider(masterPubkey)
+  const provider = new UsdtProvider(providerAddressStr)
 
-  const cellDeps = await getUnipassCellDeps()
-  const lockLen = (1 + (8 + 256 * 2) * 2) * 2
   const collector = new UnipassIndexerCollector(
     process.env.CKB_INDEXER_URL as string,
   )
 
   const builderOption: SimpleSUDTBuilderOptions = {
-    witnessArgs: {
-      lock: '0x' + '0'.repeat(lockLen),
-      input_type: '',
-      output_type: '',
-    },
+    witnessArgs: Builder.WITNESS_ARGS.RawSecp256k1,
     collector,
     // sender can leave a minimum of 0.1 CKB as a fee
     minimumOutputCellCapacity: new Amount('142.5'),
@@ -58,7 +51,7 @@ export async function getSimpleUSDTSignMessage(
     sudt,
     address,
     amount,
-    cellDeps,
+    [],
     builderOption,
   )
   console.log('builder', builder)

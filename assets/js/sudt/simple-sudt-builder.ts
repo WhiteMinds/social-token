@@ -267,7 +267,6 @@ export class SimpleSUDTBuilder extends Builder {
    */
   private rectifyTx() {
     const sudtCellDeps = [
-      PWCore.config.defaultLock.cellDep,
       PWCore.config.pwLock.cellDep,
       PWCore.config.sudtType.cellDep,
     ].concat(this.cellDeps)
@@ -276,7 +275,11 @@ export class SimpleSUDTBuilder extends Builder {
       [this.witnessArgs],
     )
 
-    this.fee = Builder.calcFee(tx, this.feeRate)
+    // Note: due to transaction will be complete after building, we can not get accurate tx size here.
+    // so we add additional 100000 shannon fee for the transaction
+    this.fee = Builder.calcFee(tx, this.feeRate).add(
+      new Amount('100000', AmountUnit.shannon),
+    )
     return tx
   }
 

@@ -177,7 +177,6 @@ export class SUDTBuilder extends Builder {
 
   private rectifyTx(inputCells: Cell[], outputCells: Cell[]) {
     const sudtCellDeps = [
-      PWCore.config.defaultLock.cellDep,
       PWCore.config.pwLock.cellDep,
       PWCore.config.sudtType.cellDep,
     ].concat(this.cellDeps)

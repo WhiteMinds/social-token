@@ -83,6 +83,7 @@ import {
 import { getCkbEnv } from '~/assets/js/config'
 import UnipassBuilder from '~/assets/js/UnipassBuilder.ts'
 import UnipassBuilderClear from '~/assets/js/UnipassBuilderClear.ts'
+import { UnipassV3Provider } from '~/assets/js/UnipassV3Provider'
 
 export default {
   data() {
@@ -358,11 +359,11 @@ export default {
                 this.sudtTokenId,
                 new Address(address, AddressType.ckb),
                 new Amount(amount, this.decimals),
-                provider.pubkey,
+                provider.address,
               )
               const fee = Builder.calcFee(tx, this.feeRate)
               this.fee = fee.toString(8, AmountUnit.shannon)
-              return { txObj, message }
+              return { tx, txObj, message }
             }
           }
           const data = await getData()
@@ -392,11 +393,11 @@ export default {
           this.sudtTokenId,
           new Address(address, AddressType.ckb),
           new Amount(amount, this.decimals),
-          provider.pubkey,
+          provider.address,
         )
         const fee = Builder.calcFee(tx, this.feeRate)
         this.fee = fee.toString(8, AmountUnit.shannon)
-        return { txObj, message }
+        return { tx, txObj, message }
       }
       // build
     },
@@ -446,16 +447,24 @@ export default {
           data = await this.buildST()
         }
         if (data) {
-          const { message, txObj } = data
-          this.Sea.localStorage('signData', {
-            txObj,
-            pending: {
-              from: provider.address,
-              to: address,
-              amount: new Amount(amount, this.decimals).toHexString(),
-            },
-          })
-          this.sign(message, provider.pubkey)
+          const { tx, txObj } = data
+          const pending = {
+            from: provider.address,
+            to: address,
+            amount: new Amount(amount, this.decimals).toHexString(),
+          }
+          const upProvider = new UnipassV3Provider(
+            provider.username,
+            // TODO: from .env or UPCKB config
+            '0xd01f5152c267b7f33b9795140c2467742e8424e49ebe2331caec197f7281b60a',
+          )
+          const txHash = await UPCKB.sendTransaction(tx, upProvider)
+          if (txHash) {
+            this.$message.success(this.t_('SendSuccess'))
+            this.pendingList(txHash, pending, txObj)
+          } else {
+            this.$message.error(this.t_('SendFailed'))
+          }
         }
       } catch (error) {
         this.loading = false
@@ -503,6 +512,7 @@ export default {
         }
       }
     },
+    // TODO: remove
     sign(message, pubkey) {
       const url = new URL(`${process.env.UNIPASS_URL}/sign`)
       url.searchParams.set('success_url', window.location.href)
@@ -554,6 +564,7 @@ export default {
       this.Sea.params('unipass_ret', '')
       this.loading = false
     },
+    // TODO: remove
     async sendSTNext(sig) {
       try {
         this.loading = true

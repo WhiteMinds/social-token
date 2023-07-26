@@ -22,9 +22,9 @@ export async function getUSDTSignMessage(
   sudtTokenId: string,
   address: Address,
   amount: Amount,
-  masterPubkey: string,
+  providerAddressStr: string,
 ) {
-  const provider = new UsdtProvider(masterPubkey)
+  const provider = new UsdtProvider(providerAddressStr)
 
   const cellDeps = await getUnipassCellDeps()
   const lockLen = (1 + (8 + 256 * 2) * 2) * 2
