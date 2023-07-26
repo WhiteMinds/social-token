@@ -8,7 +8,8 @@
     "publish": "nuxt generate&&node bin/publish-cdn.js",
     "publish-cdn": "node bin/publish-cdn.js",
     "lint": "eslint --fix --ext \".js,.vue\" --ignore-path .gitignore .",
-    "yarn": "yarn"
+    "yarn": "yarn",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@ckb-lumos/base": "^0.18.0",
@@ -35,6 +36,8 @@
     "jsqr": "1.4.0",
     "mobile-detect": "^1.4.5",
     "node-forge": "^0.10.0",
+    "patch-package": "^7.0.2",
+    "postinstall-postinstall": "^2.1.0",
     "qrcode": "^1.4.4",
     "socket.io-client": "^4.1.2",
     "up-ckb-alpha-test": "^0.1.5",
