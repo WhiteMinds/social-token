@@ -66,10 +66,11 @@ import PWCore, {
   Amount,
   normalizers,
   SerializeWitnessArgs,
-  transformers,
   AmountUnit,
   Builder,
 } from '@lay2/pw-core'
+import UPCore from 'up-core-test'
+import UPCKB from 'up-ckb-alpha-test'
 import {
   getUSDTSignMessage,
   getSUDTSignCallback,
@@ -82,7 +83,7 @@ import {
 import { getCkbEnv } from '~/assets/js/config'
 import UnipassBuilder from '~/assets/js/UnipassBuilder.ts'
 import UnipassBuilderClear from '~/assets/js/UnipassBuilderClear.ts'
-import UnipassSigner from '~/assets/js/UnipassSigner.ts'
+
 export default {
   data() {
     const name = this.$route.query.name
@@ -465,22 +466,17 @@ export default {
     },
     async sendCKB() {
       try {
+        UPCore.initPop()
         const { address, amount } = this.form
-        const tx = await this.buildCKB(address, amount)
-        const signer = new UnipassSigner(PWCore.provider)
-        const messages = signer.toMessages(tx)
-        const message = messages[0].message
-        const pubkey = this.provider.pubkey
-        const txObj = transformers.TransformTransaction(tx)
-        this.Sea.localStorage('signData', {
-          txObj,
-          pending: {
-            from: this.provider.address,
-            to: address,
-            amount: new Amount(amount).toHexString(),
-          },
+        const toAddress = new Address(address, AddressType.ckb)
+        const toAmount = new Amount(String(amount))
+        const txHash = await UPCKB.sendCKB(toAddress, toAmount, PWCore.provider)
+        this.$message.success(this.t_('SendSuccess'))
+        this.pendingList(txHash, {
+          from: PWCore.provider.address,
+          to: address,
+          amount: toAmount.toHexString(),
         })
-        this.sign(message, pubkey)
       } catch (error) {
         const message = error.message
         if (message.includes('input capacity not enough')) {
@@ -514,6 +510,7 @@ export default {
       url.searchParams.set('pubkey', pubkey)
       window.location.replace(url.href)
     },
+    // TODO: remove
     async sendCKBNext(sig) {
       this.loading = true
       try {
