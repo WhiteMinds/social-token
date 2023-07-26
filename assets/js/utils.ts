@@ -6,8 +6,8 @@ import {
   fullPayloadToAddress,
 } from '@nervosnetwork/ckb-sdk-utils'
 import { Address, Script } from '@ckb-lumos/base'
-import { encodeToAddress, generateAddress } from '@ckb-lumos/helpers';
-import { predefined } from '@ckb-lumos/config-manager';
+import { encodeToAddress, generateAddress } from '@ckb-lumos/helpers'
+import { predefined } from '@ckb-lumos/config-manager'
 
 const blake2b = require('blake2b')
 const buf2hex = function (buffer: ArrayBufferLike) {
@@ -88,30 +88,42 @@ export async function getUnipassCellDeps(): Promise<CellDep[]> {
   return data.data
 }
 
-export async function request(url: string, method: string, params?: any): Promise<any> {
-  const res = await axios.post(url, {
-    jsonrpc: "2.0",
-    method,
-    params,
-    id: 1,
-  }, {
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-    }
-})
+export async function request(
+  url: string,
+  method: string,
+  params?: any,
+): Promise<any> {
+  const res = await axios.post(
+    url,
+    {
+      jsonrpc: '2.0',
+      method,
+      params,
+      id: 1,
+    },
+    {
+      headers: {
+        'content-type': 'application/json; charset=utf-8',
+      },
+    },
+  )
 
   if (res.data.error !== undefined) {
-    throw new Error(`request rpc failed with error: ${JSON.stringify(res.data.error)}`)
+    throw new Error(
+      `request rpc failed with error: ${JSON.stringify(res.data.error)}`,
+    )
   }
   return res.data
 }
 
-export function parseToAddress(isMainnet: boolean, script: Script, options?: { version: 'CKB2019' | 'CKB2021' }): Address {
-  const config = isMainnet
-        ? { ...predefined.LINA }
-        : { ...predefined.AGGRON4 };
-  if (options?.version === 'CKB2021') return encodeToAddress(script, { config });
-    return generateAddress(script, { config });
+export function parseToAddress(
+  isMainnet: boolean,
+  script: Script,
+  options?: { version: 'CKB2019' | 'CKB2021' },
+): Address {
+  const config = isMainnet ? { ...predefined.LINA } : { ...predefined.AGGRON4 }
+  if (options?.version === 'CKB2021') return encodeToAddress(script, { config })
+  return generateAddress(script, { config })
 }
 
 export function parseToLomusScript(script: PwScript) {
@@ -124,6 +136,6 @@ export function parseToLomusScript(script: PwScript) {
 
 export function debug(message?: any, ...optionalParams: any[]) {
   if (process.env.NODE_ENV === 'development') {
-    console.log(message, ...optionalParams);
+    console.log(message, ...optionalParams)
   }
 }

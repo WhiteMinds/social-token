@@ -26,7 +26,11 @@ const minDepositLockCellCkb = new Amount('379', AmountUnit.ckb)
 export const minCkbToDeposit = new Amount('379.5', AmountUnit.ckb)
 const minChangeCellCkb = new Amount('61', AmountUnit.ckb)
 
-export async function isCkbEnough(minCkb: Amount, sudtTokenId: string, sudtAmount: Amount): Promise<boolean> {
+export async function isCkbEnough(
+  minCkb: Amount,
+  sudtTokenId: string,
+  sudtAmount: Amount,
+): Promise<boolean> {
   const ckbBalance = await getCkbBalance()
   const sudtCapacity = await getSudtCapapcity(sudtTokenId, sudtAmount)
   const allCkb = ckbBalance.add(sudtCapacity)
@@ -53,7 +57,11 @@ export async function requestPartialSignedTx(
   return deserialize(res.result.transaction) as Transaction
 }
 
-export async function buildTx(sudtTokenId: string, toAddress: Address, amount: Amount): Promise<Transaction> {
+export async function buildTx(
+  sudtTokenId: string,
+  toAddress: Address,
+  amount: Amount,
+): Promise<Transaction> {
   const cellDeps = await getUnipassCellDeps()
   const lockLen = (1 + (8 + 256 * 2) * 2) * 2
   const collector = new UnipassIndexerCollector(
@@ -68,7 +76,7 @@ export async function buildTx(sudtTokenId: string, toAddress: Address, amount: A
     },
     collector,
     minimumOutputCellCapacity: new Amount(minDepositLockCellCkb.toString()),
-    autoCalculateCapacity: true
+    autoCalculateCapacity: true,
   }
   const sudt = new SUDT(sudtTokenId)
   const builder = new DepositSudtBuilder(
