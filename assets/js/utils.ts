@@ -6,8 +6,8 @@ import {
   fullPayloadToAddress,
 } from '@nervosnetwork/ckb-sdk-utils'
 import { Address, Script } from '@ckb-lumos/base'
-import { encodeToAddress, generateAddress } from '@ckb-lumos/helpers';
-import { predefined } from '@ckb-lumos/config-manager';
+import { encodeToAddress, generateAddress } from '@ckb-lumos/helpers'
+import { predefined } from '@ckb-lumos/config-manager'
 
 const blake2b = require('blake2b')
 const buf2hex = function (buffer: ArrayBufferLike) {
@@ -85,33 +85,57 @@ export async function getUnipassCellDeps(): Promise<CellDep[]> {
   ]
   const ret = await axios.post(url, params)
   const data = ret.data as CellDepApi
+
+  // unipass contract was updated at 2023/11/03 13:30:40
+  // https://explorer.nervos.org/transaction/0xac6e37f73b94f1dd33a71527a0205a85b2e5fe1a2b19355a99965b59e5879676
+  data.data.forEach((cellDep) => {
+    if (
+      cellDep.outPoint.txHash ===
+      '0x825e0e2f8c15a4740fb0043116e8aa4e664c2e6a41c79df71ba29c48a7a0ea62'
+    ) {
+      cellDep.outPoint.txHash =
+        '0xac6e37f73b94f1dd33a71527a0205a85b2e5fe1a2b19355a99965b59e5879676'
+    }
+  })
   return data.data
 }
 
-export async function request(url: string, method: string, params?: any): Promise<any> {
-  const res = await axios.post(url, {
-    jsonrpc: "2.0",
-    method,
-    params,
-    id: 1,
-  }, {
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-    }
-})
+export async function request(
+  url: string,
+  method: string,
+  params?: any,
+): Promise<any> {
+  const res = await axios.post(
+    url,
+    {
+      jsonrpc: '2.0',
+      method,
+      params,
+      id: 1,
+    },
+    {
+      headers: {
+        'content-type': 'application/json; charset=utf-8',
+      },
+    },
+  )
 
   if (res.data.error !== undefined) {
-    throw new Error(`request rpc failed with error: ${JSON.stringify(res.data.error)}`)
+    throw new Error(
+      `request rpc failed with error: ${JSON.stringify(res.data.error)}`,
+    )
   }
   return res.data
 }
 
-export function parseToAddress(isMainnet: boolean, script: Script, options?: { version: 'CKB2019' | 'CKB2021' }): Address {
-  const config = isMainnet
-        ? { ...predefined.LINA }
-        : { ...predefined.AGGRON4 };
-  if (options?.version === 'CKB2021') return encodeToAddress(script, { config });
-    return generateAddress(script, { config });
+export function parseToAddress(
+  isMainnet: boolean,
+  script: Script,
+  options?: { version: 'CKB2019' | 'CKB2021' },
+): Address {
+  const config = isMainnet ? { ...predefined.LINA } : { ...predefined.AGGRON4 }
+  if (options?.version === 'CKB2021') return encodeToAddress(script, { config })
+  return generateAddress(script, { config })
 }
 
 export function parseToLomusScript(script: PwScript) {
@@ -124,6 +148,6 @@ export function parseToLomusScript(script: PwScript) {
 
 export function debug(message?: any, ...optionalParams: any[]) {
   if (process.env.NODE_ENV === 'development') {
-    console.log(message, ...optionalParams);
+    console.log(message, ...optionalParams)
   }
 }
